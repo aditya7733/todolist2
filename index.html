@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To Do List</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-xl mx-auto bg-white shadow p-6 rounded">
+    <h1 class="text-2xl font-bold mb-4">To Do List</h1>
+    <div class="flex mb-4">
+      <input id="taskInput" type="text" class="border flex-1 p-2 rounded" placeholder="Add a task">
+      <button onclick="addTask()" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded">Add</button>
+    </div>
+    <div class="flex space-x-2 mb-4">
+      <button onclick="filterTasks('all')" class="filter-btn px-3 py-1 border rounded">All</button>
+      <button onclick="filterTasks('active')" class="filter-btn px-3 py-1 border rounded">Active</button>
+      <button onclick="filterTasks('completed')" class="filter-btn px-3 py-1 border rounded">Completed</button>
+    </div>
+    <ul id="taskList" class="space-y-2"></ul>
+    <div class="mt-4 flex justify-between items-center">
+      <span id="taskCount"></span>
+      <button onclick="clearCompleted()" class="text-red-600">Clear Completed</button>
+    </div>
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || []
+    let filter = 'all'
+
+    function addTask() {
+      const input = document.getElementById("taskInput")
+      const value = input.value.trim()
+      if (!value) return
+      tasks.push({ text: value, completed: false })
+      input.value = ""
+      saveTasks()
+      renderTasks()
+    }
+
+    function toggleTask(index) {
+      tasks[index].completed = !tasks[index].completed
+      saveTasks()
+      renderTasks()
+    }
+
+    function deleteTask(index) {
+      tasks.splice(index, 1)
+      saveTasks()
+      renderTasks()
+    }
+
+    function editTask(index) {
+      const newText = prompt("Edit task", tasks[index].text)
+      if (newText !== null) {
+        tasks[index].text = newText
+        saveTasks()
+        renderTasks()
+      }
+    }
+
+    function filterTasks(f) {
+      filter = f
+      renderTasks()
+    }
+
+    function clearCompleted() {
+      tasks = tasks.filter(t => !t.completed)
+      saveTasks()
+      renderTasks()
+    }
+
+    function renderTasks() {
+      const list = document.getElementById("taskList")
+      list.innerHTML = ""
+      let filtered = tasks
+      if (filter === 'active') filtered = tasks.filter(t => !t.completed)
+      if (filter === 'completed') filtered = tasks.filter(t => t.completed)
+      filtered.forEach((task, index) => {
+        const li = document.createElement("li")
+        li.className = "flex justify-between items-center p-2 bg-gray-50 rounded"
+        const text = document.createElement("span")
+        text.textContent = task.text
+        text.className = task.completed ? "line-through opacity-50" : ""
+        const controls = document.createElement("div")
+        controls.className = "space-x-2"
+        const checkbox = document.createElement("input")
+        checkbox.type = "checkbox"
+        checkbox.checked = task.completed
+        checkbox.onchange = () => toggleTask(index)
+        const editBtn = document.createElement("button")
+        editBtn.textContent = "Edit"
+        editBtn.className = "text-blue-600"
+        editBtn.onclick = () => editTask(index)
+        const deleteBtn = document.createElement("button")
+        deleteBtn.textContent = "Delete"
+        deleteBtn.className = "text-red-600"
+        deleteBtn.onclick = () => deleteTask(index)
+        controls.append(checkbox, editBtn, deleteBtn)
+        li.append(text, controls)
+        list.appendChild(li)
+      })
+      updateCount()
+    }
+
+    function updateCount() {
+      const count = tasks.length
+      const active = tasks.filter(t => !t.completed).length
+      const completed = tasks.filter(t => t.completed).length
+      document.getElementById("taskCount").textContent = `All: ${count} | Active: ${active} | Completed: ${completed}`
+    }
+
+    function saveTasks() {
+      localStorage.setItem("tasks", JSON.stringify(tasks))
+    }
+
+    renderTasks()
+  </script>
+</body>
+</html>
